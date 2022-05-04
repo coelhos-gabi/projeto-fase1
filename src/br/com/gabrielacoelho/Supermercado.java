@@ -2,6 +2,7 @@ package br.com.gabrielacoelho;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class Supermercado {
@@ -38,7 +39,7 @@ public class Supermercado {
                     imprimirEstoque(produtos);
                     break;
                 case "3":
-                    //listarProdutosTipo();
+                    listarProdutosTipo(produtos,ler);
                     break;
                 default:
                     System.out.println("Opção inválida!");
@@ -47,7 +48,7 @@ public class Supermercado {
     }
 
     public static void programa(Object[][] produtos, Scanner ler){
-        imprimirCadastro(produtos);
+        //imprimirCadastro(produtos);
         System.out.print("Insira a marca do produto: ");
         String marca = ler.nextLine();
         System.out.print("Insira o identificador do produto: ");
@@ -112,9 +113,16 @@ public class Supermercado {
     public static void cadastrarTipoProduto(Object[][]produtos, Scanner ler, int linha){
         System.out.println("Insira o tipo do produto:");
         System.out.println("ALIMENTOS - BEBIDA - HIGIENE");
-        String tipoProduto = ler.nextLine().toUpperCase();
-        TipoProduto tipo = TipoProduto.valueOf(tipoProduto);
-        produtos[linha][0] = tipo;
+        try {
+            String tipoProduto = ler.nextLine().toUpperCase();
+            TipoProduto tipo = TipoProduto.valueOf(tipoProduto);
+            produtos[linha][0] = tipo;
+        }catch(Exception exception){
+            if(exception instanceof IllegalArgumentException){
+                System.out.println("Opção inválida");
+                cadastrarTipoProduto(produtos,ler,linha);
+            }
+        }
     }
 
     public static void cadastrarNomeProduto(Object[][] produtos, Scanner ler, int linha){
@@ -125,17 +133,36 @@ public class Supermercado {
 
     public static void cadastrarPrecoCusto(Object[][]produtos, Scanner ler, int linha){
         System.out.print("Insira o preço de custo: ");
-        Double custo = ler.nextDouble();
-        produtos[linha][4] = custo;
+        try {
+            double custo = ler.nextDouble();
+            produtos[linha][4] = custo;
+        }catch(Exception exception) {
+            if(exception instanceof InputMismatchException) {
+                System.out.println("ERRO DE PREÇO");
+                ler.nextLine();
+                cadastrarPrecoCusto(produtos, ler, linha);
+            }
+        }
     }
 
     public static void cadastrarQuantidadeProduto(Object[][]produtos, Scanner ler, int linha){
         System.out.print("Insira a quantidade: ");
-        int quantidade = ler.nextInt();
-        produtos[linha][5] = quantidade;
+        try{
+            int quantidade = ler.nextInt();
+            produtos[linha][5] = quantidade;
+        }catch(Exception exception){
+            if(exception instanceof InputMismatchException){
+                System.out.println("Erro de inserção! Tente novamente, utilize somente números");
+                ler.nextLine();
+                cadastrarQuantidadeProduto(produtos,ler, linha);
+            }
+        }
     }
 
     public static void cadastrarDataCompra(Object[][]produtos, Scanner ler, int linha){
+
+        //ADICIONAR VERIFICAÇÕES DE ERRO
+
         ler.nextLine();
         System.out.print("Insira a data da compra dd/MM/yyyy: ");
         String stringDataCompra = ler.nextLine();
@@ -145,12 +172,18 @@ public class Supermercado {
     }
 
     public static void cadastrarPrecoVenda(Object[][]produtos, int linha) {
+
+        //ADICIONAR VERIFICAÇÕES DE ERRO
+
         TipoProduto tipo = (TipoProduto) produtos[linha][0];
         double precoVenda = tipo.calcularPrecoVenda(tipo, (double) produtos[linha][4]);
         produtos[linha][7] = precoVenda;
     }
 
     public static void calcularEstoque(Object[][]produtos, int linha){
+
+        //ADICIONAR VERIFICAÇÕES DE ERRO
+
         int quantidade = (Integer) produtos[linha][5];
         if(produtos[linha][8] == null){
             produtos[linha][8] = quantidade;
@@ -161,7 +194,7 @@ public class Supermercado {
         }
     }
 
-    public static void imprimirCadastro(Object[][]produtos){
+    /*public static void imprimirCadastro(Object[][]produtos){
         System.out.println();
         System.out.println("#################################################");
         System.out.println("------------ PRODUTOS CADASTRADOS ------------");
@@ -176,7 +209,7 @@ public class Supermercado {
             System.out.println();
         }
         System.out.println("---------------------------------------");
-    }
+    }*/
 
     public static void imprimirEstoque(Object[][]produtos){
         System.out.println("---------------------------------------");
@@ -194,7 +227,36 @@ public class Supermercado {
             System.out.println(marca + " - " + identificador + " - " + nome + " - " + estoque);
         }
         System.out.println("---------------------------------------");
+    }
 
+    public static void listarProdutosTipo(Object[][]produtos, Scanner ler){
+        System.out.println("Insira o tipo a ser listado:");
+        try {
+            String tipo = ler.nextLine().toUpperCase();
+            TipoProduto tipoProduto = TipoProduto.valueOf(tipo);
+            System.out.println("Tipo - Marca - Identificador - Nome - Preço de Custo" +
+                    " - Quantidade - Data Compra - Preço de Venda - Estoque");
+            for (int i = 0; i < produtos.length; i++) {
+                TipoProduto tipoCadastrado = (TipoProduto) produtos[i][0];
+                if (tipoCadastrado == tipoProduto) {
+                    String marca = (String) produtos[i][1];
+                    String identificador = (String) produtos[i][2];
+                    String nome = (String) produtos[i][3];
+                    double precoCusto = (Double) produtos[i][4];
+                    int quantidade = (Integer) produtos[i][5];
+                    LocalDate datacompra = (LocalDate) produtos[i][6];
+                    double precoVenda = (Double) produtos[i][7];
+                    int estoque = (Integer) produtos[i][8];
+                    System.out.println(tipoCadastrado + " - " + marca + " - " + identificador + " - " + nome + " - " + precoCusto +
+                            " - " + quantidade + " - " + datacompra + " - " + precoVenda + " - " + estoque);
+                }
+            }
+        }catch (Exception exception){
+            if(exception instanceof IllegalArgumentException){
+                System.out.println("Tipo inválido! Tente novamente");
+                listarProdutosTipo(produtos,ler);
+            }
+        }
     }
 
     public static void redimensionar(){
