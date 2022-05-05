@@ -1,9 +1,9 @@
 package br.com.gabrielacoelho;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.InputMismatchException;
+import java.util.Locale;
 import java.util.Scanner;
 
 public class Supermercado {
@@ -16,12 +16,16 @@ public class Supermercado {
         System.out.println("###### SUPERMERCADO ######");
         System.out.println("Bem-vindo!");
 
-
         do {
             System.out.println("O que deseja fazer?");
             System.out.println("1 - Cadastrar/Comprar produtos");
             System.out.println("2 - Imprimir estoque");
             System.out.println("3 - Listar os produto pelo Tipo");
+            System.out.println("4 - Pesquisar um produto pelo identificador");
+            System.out.println("5 - Pesquisar um produto pelo nome");
+            System.out.println("6 - Realizar uma venda");
+            System.out.println("7 - Imprimir relatorio de vendas analitico, todas as vendas");
+            System.out.println("8 - Imprimir relatorio de vendas sintetico, consolidado por CPF");
             System.out.println("0 - Sair");
             option= ler.nextLine();
 
@@ -41,12 +45,29 @@ public class Supermercado {
                 case "3":
                     listarProdutosTipo(produtos,ler);
                     break;
+                case "4":
+                    pesquisarIdentificadorProduto(produtos, ler);
+                    break;
+                case "5":
+                    // PESQUISAR UM PRODUTO PELO NOME USANDO "LIKE" - PARA PODER PEGAR A PARTIR DE UMA PARTE DO NOME
+                    pesquisarNomeProduto(produtos, ler);
+                    break;
+                case "6":
+                    // VENDAS
+                    //realizarVenda(produtos);
+                    //break;
+                case"7":
+                    //RELATORIO DE VENDAS ANALITICO, TODAS AS VENDAS
+                    //CPF   | TIPO CLIENTE | QUANTIDADE PRODUTOS  | VALOR PAGO
+                    //imprimirRelatorioVendas();
+                    //break;
+                case"8":
+                    //RELATORIO DE VENDAS SINTETICO, CONSOLIDADO POR CPF
                 default:
                     System.out.println("Opção inválida!");
             }
         }while(!(option.equals("0")));
     }
-
     public static void programa(Object[][] produtos, Scanner ler){
         //imprimirCadastro(produtos);
         System.out.print("Insira a marca do produto: ");
@@ -278,25 +299,13 @@ public class Supermercado {
     }
 
     public static void imprimirProdutosTipo(Object[][] produtos, TipoProduto tipoProduto){
-        System.out.println("Tipo - Marca - Identificador - Nome - Preço de Custo" +
-                " - Quantidade - Data Compra - Preço de Venda - Estoque");
-
+        imprimirCabecalho();
         int contador = 0;
 
         for (int i = 0; i < produtos.length; i++) {
             TipoProduto tipoCadastrado = (TipoProduto) produtos[i][0];
             if (tipoCadastrado == tipoProduto) {
-                String marca = (String) produtos[i][1];
-                String identificador = (String) produtos[i][2];
-                String nome = (String) produtos[i][3];
-                double precoCusto = (Double) produtos[i][4];
-                int quantidade = (Integer) produtos[i][5];
-                LocalDateTime dataCompra = (LocalDateTime) produtos[i][6];
-                double precoVenda = (Double) produtos[i][7];
-                int estoque = (Integer) produtos[i][8];
-                System.out.printf("%s - %s - %s - %s - %.2f - %d - %s - %.2f - %d %n",tipoCadastrado.getTipo(), marca,
-                        identificador, nome, precoCusto, quantidade,
-                        dataCompra.format(DateTimeFormatter.ofPattern("dd/MM/yyy HH:mm")), precoVenda, estoque);
+                imprimirDado(produtos, i);
             } else{
                 contador++;
             }
@@ -305,7 +314,10 @@ public class Supermercado {
             System.out.println("Não há produtos cadastrados para esse tipo");
         }
     }
-
+    public static void imprimirCabecalho(){
+        System.out.println("Tipo - Marca - Identificador - Nome - Preço de Custo" +
+                " - Quantidade - Data Compra - Preço de Venda - Estoque");
+    }
     public static void redimensionar(){
         Object[][] novaTabela = new Object [produtos.length * 2][9];
         for (int i = 0; i < produtos.length; i++) {
@@ -314,6 +326,49 @@ public class Supermercado {
             }
         }
         produtos =  novaTabela;
+    }
+
+    public static void pesquisarIdentificadorProduto(Object[][]produtos, Scanner ler){
+        System.out.println("Insira o identificador do produto:");
+        String identificador = ler.nextLine();
+        imprimirCabecalho();
+        for (int i = 0; i < produtos.length; i++) {
+            String identificadorCadastrado = (String) produtos[i][2];
+            if(identificadorCadastrado.equals(identificador)){
+                imprimirDado(produtos, i);
+                return;
+            }
+        }
+        System.out.println("Código identificador não encontrado");
+    }
+    public static void imprimirDado(Object[][]produtos, int i){
+        TipoProduto tipoCadastrado = (TipoProduto) produtos[i][0];
+        String identificador = (String) produtos[i][1];
+        String marca = (String) produtos[i][1];
+        String nome = (String) produtos[i][3];
+        double precoCusto = (Double) produtos[i][4];
+        int quantidade = (Integer) produtos[i][5];
+        LocalDateTime dataCompra = (LocalDateTime) produtos[i][6];
+        String data = dataCompra.format(DateTimeFormatter.ofPattern("dd/MM/yyy HH:mm"));
+        double precoVenda = (Double) produtos[i][7];
+        int estoque = (Integer) produtos[i][8];
+        System.out.printf("%s - %s - %s - %s - %.2f - %d - %s - %.2f - %d %n",tipoCadastrado.getTipo(), marca,
+                identificador, nome, precoCusto, quantidade, data, precoVenda, estoque);
+        System.out.println();
+    }
+    private static void pesquisarNomeProduto(Object[][] produtos, Scanner ler) {
+        System.out.println("Insira o nome do produto que deseja encontrar:");
+        String nome = ler.nextLine();
+        imprimirCabecalho();
+        for (int i = 0; i < produtos.length; i++) {
+            String nomeCadastrado = (String) produtos[i][3];
+            if(nomeCadastrado != null) {
+                if (nomeCadastrado.toUpperCase().contains(nome.toUpperCase())) {
+                    imprimirDado(produtos, i);
+                }
+            }
+        }
+
     }
 }
 
