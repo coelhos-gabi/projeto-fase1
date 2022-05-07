@@ -19,7 +19,7 @@ public class Supermercado {
 
         Scanner ler = new Scanner(System.in);
         String option;
-        System.out.println("###### SUPERMERCADO ######");
+        System.out.println("###### SUPERMERCADINHO GRUPO04 ######");
         System.out.println("Bem-vindo!");
 
         do {
@@ -63,7 +63,7 @@ public class Supermercado {
                 case"7":
                     //RELATORIO DE VENDAS ANALITICO, TODAS AS VENDAS
                     //CPF   | TIPO CLIENTE | QUANTIDADE PRODUTOS  | VALOR PAGO
-                    imprimirRelatorioVendas(vendas);
+                    imprimirRelatorioVendas();
                     break;
                 case"8":
                     //RELATORIO DE VENDAS SINTETICO, CONSOLIDADO POR CPF
@@ -152,7 +152,6 @@ public class Supermercado {
         }
         return -1;
     }
-
     public static void cadastrarTipoProduto(Object[][]produtos, Scanner ler, int linha){
         System.out.println("Insira a opção do tipo:");
         for (TipoProduto value : TipoProduto.values()) {
@@ -445,29 +444,25 @@ public class Supermercado {
         System.out.println();
     }
     public static void realizarVenda(Object[][] produtos, Object[][] vendas, Scanner ler){
-        Object [][] vendasCliente = new Object[1][5];
+        Object [][] vendasCliente = new Object[1][7];
 
-        TipoClientes tipoClientes = null;
+        TipoClientes tipoClientes;
 
-        int linhaLivre = encontrarPosicaoLivre(vendas,"vendas");
-
-        String cpf = cadastrarCpf(vendas, ler, linhaLivre);
-
+        String cpf = cadastrarCpf(ler);
         if(!(cpf.equals("00000000191"))){
-            tipoClientes = registrarTipoCliente(vendas, ler, linhaLivre);
+            tipoClientes = registrarTipoCliente(ler);
+        } else{
+            tipoClientes = TipoClientes.FISICA;
         }
 
         String identificador = "";
         do {
-            if (quantidadeLinhasVendas == vendas.length) {
-                vendas = redimensionarVendas(vendas);
-            }
-            if(quantidadeLinhasCliente == vendasCliente.length){
-                vendasCliente = redimensionarVendasCliente(vendasCliente);
-            }
-
             int i = 0;
             do{
+                if(quantidadeLinhasCliente == vendasCliente.length){
+                    vendasCliente = redimensionarVendasCliente(vendasCliente);
+                }
+
                 System.out.println("--- Para concluir a venda digite FIM ---");
                 System.out.print("Insira o identificador do produto: ");
                 identificador = ler.nextLine();
@@ -479,11 +474,10 @@ public class Supermercado {
                     if (i < 0) {
                         System.out.println("Produto não encontrado, insira novamente.");
                     }else {
-                        registrarVenda(produtos, vendas, ler, identificador, vendasCliente, cpf);
+                        registrarVenda(produtos, ler, identificador, vendasCliente, cpf, tipoClientes);
                         ler.nextLine();
                     }
                 }
-
             } while ((i < 0));
 
         } while (!identificador.equalsIgnoreCase("fim"));
@@ -499,26 +493,41 @@ public class Supermercado {
         System.out.println("--------------------------------------------------------------");
         System.out.printf("VALOR TOTAL DA COMPRA:   R$%.2f %n", totalCompra);
         System.out.println();
+        guardarVendasCliente(vendasCliente);
     }
 
-    public static String cadastrarCpf(Object[][]vendas, Scanner ler, int linha){
+    public static void guardarVendasCliente(Object [][]vendasCliente){
+
+        for (int i = 0; i < vendasCliente.length; i++) {
+            if (quantidadeLinhasVendas == vendas.length) {
+                vendas = redimensionarVendas(vendas);
+            }
+            int linhaLivre = encontrarPosicaoLivre(vendas,"vendas");
+            for (int j = 0; j < vendasCliente.length; j++) {
+                vendas[linhaLivre][j] = vendasCliente[i][j];
+            }
+            quantidadeLinhasVendas++;
+        }
+    }
+
+    public static String cadastrarCpf(Scanner ler){
         String cpf;
         System.out.println("Quer adicionar CPF/CNPJ?");
         System.out.println("0 - Não | 1 - Sim");
         String resposta = ler.nextLine();
         if (resposta.equals("0")){
             cpf = "00000000191";
-            TipoClientes tipoCliente = TipoClientes.FISICA;
-            vendas[linha][6] = tipoCliente;
         }else {
             System.out.println("Insira o documento:");
             cpf = ler.nextLine();
         }
-        vendas[linha][0] = cpf;
         return cpf;
     }
 
-    public static TipoClientes registrarTipoCliente(Object[][]vendas, Scanner ler, int linha){
+    public static TipoClientes registrarTipoCliente(Scanner ler){
+
+        // verificação de erro
+
         System.out.println("Insira o tipo do cliente");
         for (TipoClientes value : TipoClientes.values()) {
             System.out.println(value.ordinal() + "-" +value.getTipo());
@@ -528,52 +537,55 @@ public class Supermercado {
         switch(cliente){
             case"0":
                 tipoCliente = TipoClientes.FISICA;
-                vendas[linha][6] = tipoCliente;
-                break;
+                return tipoCliente;
             case"1":
                 tipoCliente = TipoClientes.JURIDICA;
-                vendas[linha][6] = tipoCliente;
-                break;
+                return tipoCliente;
             case"2":
                 tipoCliente = TipoClientes.VIP;
-                vendas[linha][6] = tipoCliente;
-                break;
+                return tipoCliente;
             default:
                 System.out.println("Opção inválida");
         }
-        return (TipoClientes) vendas[linha][6];
+        return TipoClientes.FISICA;
     }
-    public static void registrarVenda(Object[][]produtos,Object[][]vendas, Scanner ler, String identificador,
-                                      Object[][]vendasCliente, String cpf){
+    public static void registrarVenda(Object[][]produtos, Scanner ler, String identificador,
+                                      Object[][]vendasCliente, String cpf, TipoClientes tipoClientes){
 
             System.out.print("Insira a quantidade: ");
             int quantidade = ler.nextInt();
             int linhaClientes = encontrarPosicaoLivre(vendasCliente, "vendasCliente");
-            int linhaLivreVendas = encontrarPosicaoLivre(vendas, "vendas");
+//            int linhaLivreVendas = encontrarPosicaoLivre(vendas, "vendas");
             for (int i = 0; i < produtos.length; i++) {
                 String identificadorCadastrado = (String) produtos[i][2];
                 if (identificadorCadastrado.equalsIgnoreCase(identificador)) {
                     if (quantidade > (Integer) produtos[i][8]) {
                         System.out.println("Estoque insuficiente: " + produtos[i][8]);
                     } else {
-                        vendas[linhaLivreVendas][0] = cpf;
-                        vendas[linhaLivreVendas][1] = identificador;
+//                        vendas[linhaLivreVendas][0] = cpf;
+//                        vendas[linhaLivreVendas][1] = identificador;
+//                        vendas[linhaLivreVendas][2] = nome;
+//                        vendas[linhaLivreVendas][3] = quantidade;
+//                        vendas[linhaLivreVendas][4] = precoVenda;
+//                        vendas[linhaLivreVendas][5] = (Double) vendas[linhaLivreVendas][4] * quantidade;
+
+                        vendasCliente[linhaClientes][0] = cpf;
                         String nome = (String) produtos[i][3];
-                        vendas[linhaLivreVendas][2] = nome;
-                        vendas[linhaLivreVendas][3] = quantidade;
+                        vendasCliente[linhaClientes][1] = tipoClientes;
+                        vendasCliente[linhaClientes][2] = identificador;
+                        vendasCliente[linhaClientes][3] = nome;
+                        vendasCliente[linhaClientes][4] = quantidade;
+
                         double precoVenda = (Double) produtos[i][7];
-                        vendas[linhaLivreVendas][4] = precoVenda;
-                        vendas[linhaLivreVendas][5] = (Double) vendas[linhaLivreVendas][4] * quantidade;
+                        vendasCliente[linhaClientes][5] = precoVenda;
+                        vendasCliente[linhaClientes][6] = (Integer) vendasCliente[linhaClientes][4] *
+                                                          (Double) vendasCliente[linhaClientes][5];
                         int estoque = (Integer) produtos[i][8];
                         estoque -= quantidade;
                         produtos[i][8] = estoque;
-                        vendasCliente[linhaClientes][0] = identificador;
-                        vendasCliente[linhaClientes][1] = nome;
-                        vendasCliente[linhaClientes][2] = quantidade;
-                        vendasCliente[linhaClientes][3] = precoVenda;
-                        vendasCliente[linhaClientes][4] = (Integer) vendasCliente[linhaClientes][2] * (Double) vendasCliente[linhaClientes][3];
+
                         linhaClientes++;
-                        quantidadeLinhasVendas++;
+//                        quantidadeLinhasVendas++;
                         quantidadeLinhasCliente++;
                         return;
                     }
@@ -600,17 +612,19 @@ public class Supermercado {
     }
 
     public static double imprimirNotaFiscal(Object[][]vendasCliente){
+        //CPF- TIPO CLIENTE - CODIGO - NOME - QUANTIDADE - PRECOVENDA - VALOR PAGAR
+
         String action = "notafiscal";
         double valorPagar = 0;
         imprimirCabecalho(action);
         String identificador;
         for (int i = 0; i < vendasCliente.length; i++) {
-            identificador = (String) vendasCliente[i][0];
+            identificador = (String) vendasCliente[i][2];
             if(identificador != null) {
-                String nome = (String) vendasCliente[i][1];
-                int quantidade = (Integer) vendasCliente[i][2];
-                double precoVenda = (Double) vendasCliente[i][3];
-                double valorProduto = (Double) vendasCliente[i][4];
+                String nome = (String) vendasCliente[i][3];
+                int quantidade = (Integer) vendasCliente[i][4];
+                double precoVenda = (Double) vendasCliente[i][5];
+                double valorProduto = (Double) vendasCliente[i][6];
                 valorPagar += valorProduto;
                 System.out.printf("%s - %s - %d - %.2f - %.2f %n", identificador, nome, quantidade, precoVenda, valorProduto);
             }else{
@@ -620,13 +634,13 @@ public class Supermercado {
         return valorPagar;
     }
 
-    public static void imprimirRelatorioVendas(Object[][]vendas){
+    public static void imprimirRelatorioVendas(){
         String action = "vendas";
         imprimirCabecalho(action);
         for (int i = 0; i < vendas.length; i++) {
             String cpf = (String) vendas[i][0];
-            TipoClientes tipoCliente = (TipoClientes) vendas[i][6];
-            int quantidade = (Integer) vendas[i][3];
+            TipoClientes tipoCliente = (TipoClientes) vendas[i][1];
+            int quantidade = (Integer) vendas[i][4];
             double valorPago = (Double) vendas[i][5] * quantidade;
             System.out.printf("%s - %s - %d - %.2f %n", cpf, tipoCliente.getTipo(), quantidade, valorPago);
         }
