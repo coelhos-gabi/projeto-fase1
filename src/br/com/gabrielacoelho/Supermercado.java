@@ -407,7 +407,7 @@ public class Supermercado {
         }
         System.out.println();
     }
-    public static void realizarVenda(Object[][]produtos, Object[][]vendas, Scanner ler){
+    public static void realizarVenda(Object[][] produtos, Object[][] vendas, Scanner ler){
         Object [][] vendasCliente = new Object[1][5];
 
         TipoClientes tipoClientes = null;
@@ -420,27 +420,39 @@ public class Supermercado {
             tipoClientes = registrarTipoCliente(vendas, ler, linhaLivre);
         }
 
-        String identificador;
-        while (true) {
+        String identificador = "inicio";
+        do {
+
             if (quantidadeLinhasVendas == vendas.length) {
                 vendas = redimensionarVendas(vendas);
             }
             if(quantidadeLinhasCliente == vendasCliente.length){
                 vendasCliente = redimensionarVendasCliente(vendasCliente);
             }
-            System.out.println("--- Para concluir a venda digite FIM ---");
-            System.out.print("Insira o identificador do produto: ");
-            identificador = ler.nextLine();
-            int i = estaCadastrado(produtos, identificador);
-            if(identificador.equalsIgnoreCase("fim")){
-                break;
-            }
-            if(i < 0){
-                System.out.println("Código não encontrado");
-            }
-            registrarVenda(produtos, vendas, ler, identificador,vendasCliente, cpf);
-            ler.nextLine();
-        }
+
+            int i = 0;
+            do{
+
+                System.out.println("--- Para concluir a venda digite FIM ---");
+                System.out.print("Insira o identificador do produto: ");
+                identificador = ler.nextLine();
+
+                if (identificador.equalsIgnoreCase("fim")) {
+                    break;
+                } else {
+                    i = estaCadastrado(produtos, identificador);
+                    if (i < 0) {
+                        System.out.println("Produto não encontrado, insira novamente.");
+                    }else {
+                        registrarVenda(produtos, vendas, ler, identificador, vendasCliente, cpf);
+                        ler.nextLine();
+                    }
+                }
+
+            } while ((i < 0));
+
+        } while (!identificador.equalsIgnoreCase("fim"));
+
         double valor = imprimirNotaFiscal(vendasCliente);
         System.out.println();
         double totalCompra;
