@@ -83,7 +83,8 @@ public class Supermercado {
         int linha = estaCadastrado(produtos,identificador);
 
         if(linha < 0){
-            int linhaLivre = encontrarPosicaoLivre(produtos);
+            String metodo = "produtos";
+            int linhaLivre = encontrarPosicaoLivre(produtos, metodo);
 
             produtos[linhaLivre][1] = marca;
             produtos[linhaLivre][2] = identificador;
@@ -124,13 +125,30 @@ public class Supermercado {
         return -1;
     }
 
-    public static int encontrarPosicaoLivre(Object[][] produtos){
-        for (int i = 0; i < produtos.length; i++) {
-           String marca = (String) produtos[i][1];
-           String identificador = (String) produtos[i][2];
-           if(marca == null && identificador == null){
-               return i;
-           }
+    public static int encontrarPosicaoLivre(Object[][] matriz, String metodo){
+        if(metodo.equals("produtos")) {
+            for (int i = 0; i < matriz.length; i++) {
+                String identificador = (String) matriz[i][2];
+                if (identificador == null) {
+                    return i;
+                }
+            }
+        }
+        if(metodo.equals("vendas")){
+            for (int i = 0; i < matriz.length; i++) {
+                String codigo = (String) matriz[i][2];
+                if (codigo == null) {
+                    return i;
+                }
+            }
+        }
+        if(metodo.equals("vendasCliente")){
+            for (int i = 0; i < matriz.length; i++) {
+                String codigo = (String) matriz[i][0];
+                if (codigo == null) {
+                    return i;
+                }
+            }
         }
         return -1;
     }
@@ -171,13 +189,21 @@ public class Supermercado {
     }
 
     public static void cadastrarPrecoCusto(Object[][]produtos, Scanner ler, int linha){
-        System.out.print("Insira o preço de custo: ");
+
         try {
-            String custo = ler.nextLine();
-            double precoCusto = Double.parseDouble(custo.replace(',', '.'));
+            double precoCusto;
+            do {
+                System.out.print("Insira o preço de custo: ");
+                String custo = ler.nextLine();
+                precoCusto = Double.parseDouble(custo.replace(',', '.'));
+                if (precoCusto <= 0) {
+                    System.out.println("O preço de custo deve ser maior que 0.");
+                }
+            } while (precoCusto <= 0);
+
             produtos[linha][4] = precoCusto;
         }catch(Exception exception) {
-            if(exception instanceof InputMismatchException) {
+            if(exception instanceof InputMismatchException) { //nextDouble
                 System.out.println("ERRO DE PREÇO");
                 ler.nextLine();
                 cadastrarPrecoCusto(produtos, ler, linha);
@@ -187,13 +213,24 @@ public class Supermercado {
                 ler.nextLine();
                 cadastrarPrecoCusto(produtos,ler,linha);
             }
+            if (exception instanceof NumberFormatException) {
+                System.out.println("Não deve conter letras! Tente novamente" + "");
+                cadastrarPrecoCusto(produtos, ler, linha);
+            }
         }
     }
 
     public static void cadastrarQuantidadeProduto(Object[][]produtos, Scanner ler, int linha){
-        System.out.print("Insira a quantidade: ");
+
         try{
-            int quantidade = ler.nextInt();
+            int quantidade;
+            do {
+                System.out.print("Insira a quantidade: ");
+                quantidade  = ler.nextInt();
+                if (quantidade < 0) {
+                    System.out.println("A quantidade não pode ser negativa.");
+                }
+            } while (quantidade < 0);
             produtos[linha][5] = quantidade;
             ler.nextLine();
         }catch(Exception exception){
@@ -226,7 +263,7 @@ public class Supermercado {
         //ADICIONAR VERIFICAÇÕES DE ERRO
 
         TipoProduto tipo = (TipoProduto) produtos[linha][0];
-        double precoVenda = tipo.calcularPrecoVenda(tipo, (Double) produtos[linha][4]);
+        double precoVenda = tipo.calcularPrecoVenda((Double) produtos[linha][4]);
         produtos[linha][7] = precoVenda;
     }
 
@@ -412,7 +449,7 @@ public class Supermercado {
 
         TipoClientes tipoClientes = null;
 
-        int linhaLivre = encontrarPosicaoLivre(vendas);
+        int linhaLivre = encontrarPosicaoLivre(vendas,"vendas");
 
         String cpf = cadastrarCpf(vendas, ler, linhaLivre);
 
@@ -420,9 +457,8 @@ public class Supermercado {
             tipoClientes = registrarTipoCliente(vendas, ler, linhaLivre);
         }
 
-        String identificador = "inicio";
+        String identificador = "";
         do {
-
             if (quantidadeLinhasVendas == vendas.length) {
                 vendas = redimensionarVendas(vendas);
             }
@@ -432,7 +468,6 @@ public class Supermercado {
 
             int i = 0;
             do{
-
                 System.out.println("--- Para concluir a venda digite FIM ---");
                 System.out.print("Insira o identificador do produto: ");
                 identificador = ler.nextLine();
@@ -473,6 +508,8 @@ public class Supermercado {
         String resposta = ler.nextLine();
         if (resposta.equals("0")){
             cpf = "00000000191";
+            TipoClientes tipoCliente = TipoClientes.FISICA;
+            vendas[linha][6] = tipoCliente;
         }else {
             System.out.println("Insira o documento:");
             cpf = ler.nextLine();
@@ -511,31 +548,31 @@ public class Supermercado {
 
             System.out.print("Insira a quantidade: ");
             int quantidade = ler.nextInt();
-            int linha = 0;
-            int linhaLivre = encontrarPosicaoLivre(vendas);
+            int linhaClientes = encontrarPosicaoLivre(vendasCliente, "vendasCliente");
+            int linhaLivreVendas = encontrarPosicaoLivre(vendas, "vendas");
             for (int i = 0; i < produtos.length; i++) {
                 String identificadorCadastrado = (String) produtos[i][2];
                 if (identificadorCadastrado.equalsIgnoreCase(identificador)) {
                     if (quantidade > (Integer) produtos[i][8]) {
-                        System.out.println("Estoque insuficiente");
+                        System.out.println("Estoque insuficiente: " + produtos[i][8]);
                     } else {
-                        vendas[linhaLivre][0] = cpf;
-                        vendas[linhaLivre][1] = identificador;
+                        vendas[linhaLivreVendas][0] = cpf;
+                        vendas[linhaLivreVendas][1] = identificador;
                         String nome = (String) produtos[i][3];
-                        vendas[linhaLivre][2] = nome;
-                        vendas[linhaLivre][3] = quantidade;
+                        vendas[linhaLivreVendas][2] = nome;
+                        vendas[linhaLivreVendas][3] = quantidade;
                         double precoVenda = (Double) produtos[i][7];
-                        vendas[linhaLivre][4] = precoVenda;
-                        vendas[linhaLivre][5] = (Double) vendas[linhaLivre][4] * quantidade;
+                        vendas[linhaLivreVendas][4] = precoVenda;
+                        vendas[linhaLivreVendas][5] = (Double) vendas[linhaLivreVendas][4] * quantidade;
                         int estoque = (Integer) produtos[i][8];
                         estoque -= quantidade;
                         produtos[i][8] = estoque;
-                        vendasCliente[linha][0] = identificador;
-                        vendasCliente[linha][1] = nome;
-                        vendasCliente[linha][2] = quantidade;
-                        vendasCliente[linha][3] = precoVenda;
-                        vendasCliente[linha][4] = (Integer) vendasCliente[linha][2] * (Double) vendasCliente[linha][3];
-                        linha++;
+                        vendasCliente[linhaClientes][0] = identificador;
+                        vendasCliente[linhaClientes][1] = nome;
+                        vendasCliente[linhaClientes][2] = quantidade;
+                        vendasCliente[linhaClientes][3] = precoVenda;
+                        vendasCliente[linhaClientes][4] = (Integer) vendasCliente[linhaClientes][2] * (Double) vendasCliente[linhaClientes][3];
+                        linhaClientes++;
                         quantidadeLinhasVendas++;
                         quantidadeLinhasCliente++;
                         return;

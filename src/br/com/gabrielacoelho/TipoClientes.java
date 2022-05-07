@@ -18,4 +18,5 @@ public enum TipoClientes {
     public double getDesconto() {
         return this.desconto;
     }
+
 }
